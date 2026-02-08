@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.EnumSet;
 
 import Pr1.EventoForo;
 import Pr1.Mensaje;
@@ -15,34 +17,72 @@ import Pr1.suscriber.Usuario;
 public class TemaForo implements Sujeto {
     private String titulo;
     private List<Observer> observadores = new ArrayList<>();
+    private Map<Observer, Set<TipoEvento>> interesesPorObserver = new HashMap<>();
     private Map<String, Mensaje> mensajes = new HashMap<>(); 
     private List<String> ordenMensajes = new ArrayList<>(); // Para mantener el orden de los mensajes, ya que el HashMap no lo garantiza.
 
+    // Constructor
     public TemaForo(String titulo) {
         this.titulo = titulo;
     }
 
+    // Métodos de la interfaz Sujeto
     @Override
     public void suscribir(Observer o) {
-        observadores.add(o);
+        suscribir(o, null);
+    }
+
+    @Override
+    public void suscribir(Observer o, Set<TipoEvento> intereses) {
+        if (!observadores.contains(o)) {
+            observadores.add(o);
+        }
+
+        if (intereses == null || intereses.isEmpty()) {
+            interesesPorObserver.remove(o); // Sin preferencias explícitas: recibe todos los eventos.
+        } else {
+            interesesPorObserver.put(o, EnumSet.copyOf(intereses));
+        }
+
+        // Evento para informar de nuevas suscripciones
+        notificar(new EventoForo(null, TipoEvento.NUEVA_SUSCRIPCION));
+    }
+
+    @Override
+    public void registrarInteres(Observer o, TipoEvento interes) {
+        if (!observadores.contains(o)) {
+            observadores.add(o);
+        }
+        Set<TipoEvento> intereses = interesesPorObserver.computeIfAbsent(
+            o, k -> EnumSet.noneOf(TipoEvento.class)
+        );
+        intereses.add(interes);
     }
 
     @Override
     public void borrar(Observer o) {
         observadores.remove(o);
+        interesesPorObserver.remove(o);
     }
 
     @Override
     public void notificar(EventoForo evento) {
         for (Observer o : observadores) {
-            o.actualizar(this, evento);
+            if (debeNotificar(o, evento.getTipo())) {
+                o.actualizar(this, evento);
+            }
         }
+    }
+
+    private boolean debeNotificar(Observer o, TipoEvento tipo) {
+        Set<TipoEvento> intereses = interesesPorObserver.get(o);
+        return intereses == null || intereses.contains(tipo);
     }
 
     public void publicarMensaje(Mensaje mensaje) {
         mensajes.put(mensaje.getId(), mensaje);
         ordenMensajes.add(mensaje.getId());
-        notificar(new EventoForo(mensaje, TipoEvento.NUEVO_MENSAJE));
+        notificar(new EventoForo(mensaje.getId(), TipoEvento.NUEVO_MENSAJE));
     }
 
     public boolean editarMensaje(String idMensaje, String nuevoContenido, Usuario autorEditor) {
@@ -61,7 +101,7 @@ public class TemaForo implements Sujeto {
 
         // Editamos el mensaje y notificamos a los observadores.
         mensaje.editarMensaje(nuevoContenido);
-        notificar(new EventoForo(mensaje, TipoEvento.MENSAJE_EDITADO));
+        notificar(new EventoForo(mensaje.getId(), TipoEvento.MENSAJE_EDITADO));
 
         return true;
     }
@@ -80,9 +120,10 @@ public class TemaForo implements Sujeto {
             return false;
         }
 
+        // Notificamos antes de borrar para permitir pull de detalles si el observador lo desea.
+        notificar(new EventoForo(mensaje.getId(), TipoEvento.MENSAJE_ELIMINADO));
         mensajes.remove(idMensaje);
         ordenMensajes.remove(idMensaje);
-        notificar(new EventoForo(mensaje, TipoEvento.MENSAJE_ELIMINADO));
         return true;
     }
 

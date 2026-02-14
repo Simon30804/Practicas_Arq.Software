@@ -14,7 +14,7 @@ import java.util.Set;
  * El usuario puede configurar si desea mostrar el contenido del mensaje, el autor, o ambos en las notificaciones.
  * Además, el usuario puede silenciar foros específicos para no recibir notificaciones de esos foros.
  */
-public class Usuario implements Observer {
+public class Usuario extends Observer {
     private String nombre;
 
     // Mostrar contenido y autor son configurables para permitir al usuario personalizar su experiencia de notificación.
@@ -57,7 +57,7 @@ public class Usuario implements Observer {
         if (idMensaje != null) {
             if (mostrarContenido || mostrarAutor) {
                 System.out.println("[PULL] " + nombre + " consulta detalles del mensaje.");
-                Mensaje mensaje = s.getMensaje(idMensaje);
+                Mensaje mensaje = ((TemaForo) s).getMensaje(idMensaje);
                 if (mensaje == null) {
                     System.out.println("[PULL] Detalles no disponibles (mensaje ya no existe).");
                     return;

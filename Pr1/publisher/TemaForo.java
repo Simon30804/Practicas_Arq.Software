@@ -14,10 +14,8 @@ import Pr1.Observer;
 import Pr1.Sujeto;
 import Pr1.suscriber.Usuario;
 
-public class TemaForo implements Sujeto {
+public class TemaForo extends Sujeto {
     private String titulo;
-    private List<Observer> observadores = new ArrayList<>();
-    private Map<Observer, Set<TipoEvento>> interesesPorObserver = new HashMap<>();
     private Map<String, Mensaje> mensajes = new HashMap<>(); 
     private List<String> ordenMensajes = new ArrayList<>(); // Para mantener el orden de los mensajes, ya que el HashMap no lo garantiza.
 

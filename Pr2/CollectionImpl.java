@@ -34,7 +34,7 @@ implements Collection {
 
     public static void main(String[] args) {
         // Nombre o IP del host donde reside el objeto servidor 
-        String hostName = "localhost"; // se puede usar " IPhostremoto:puerto" 
+        String hostName = "10.1.66.64:3007"; // se puede usar " IPhostremoto:puerto" 
         // Por defecto, RMI usa el puerto 1099
 
         try {

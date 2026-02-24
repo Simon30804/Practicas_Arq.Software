@@ -96,29 +96,33 @@ public class Cliente {
             System.out.println("\n=================================");
             System.out.println("  MENÚ PRINCIPAL");
             System.out.println("=================================");
-            System.out.println("1. Enviar mensaje");
-            System.out.println("2. Ver mensajes recientes");
-            System.out.println("3. Ver lista de usuarios");
-            System.out.println("4. Estadísticas del foro");
-            System.out.println("5. Salir");
+            System.out.println("1. Ver servicios disponibles");
+            System.out.println("2. Enviar mensaje");
+            System.out.println("3. Ver mensajes recientes");
+            System.out.println("4. Ver lista de usuarios");
+            System.out.println("5. Estadísticas del foro");
+            System.out.println("6. Salir");
             System.out.print("Selecciona una opción: ");
 
             String opcion = scanner.nextLine().trim();
 
             switch (opcion) {
                 case "1":
-                    enviarMensaje();
+                    verServiciosDisponibles();
                     break;
                 case "2":
-                    verMensajesRecientes();
+                    enviarMensaje();
                     break;
                 case "3":
-                    verListaUsuarios();
+                    verMensajesRecientes();
                     break;
                 case "4":
-                    verEstadisticas();
+                    verListaUsuarios();
                     break;
                 case "5":
+                    verEstadisticas();
+                    break;
+                case "6":
                     System.out.println("\n¡Hasta luego!" + usuarioActual + "!");
                     System.exit(0);
                 default:
@@ -128,7 +132,30 @@ public class Cliente {
     }
 
     /*
-    * Opción 1: Enviar un mensaje al foro
+    * Opción 1: Ver servicios disponibles
+    * Muestra la lista de servicios que el Broker tiene registrados, incluyendo el nombre del servicio
+    */
+   private static void verServiciosDisponibles() {
+        System.out.println("\n=================================");
+        System.out.println("  SERVICIOS DISPONIBLES");
+        System.out.println("=================================");
+        try {
+            Servicios servicios = broker.lista_servicios();
+            if (servicios.getServicios().isEmpty()) {
+                System.out.println("No hay servicios disponibles en este momento.");
+            } else {
+                servicios.getServicios().forEach(s -> 
+                    System.out.println("- " + s.getNombreServicio() + " (Servidor: " + s.getNombreServidor() + ")")
+                );
+                System.out.println("\nTotal: " + servicios.getNumeroServicios() + " servicios");
+            }
+        } catch (Exception e) {
+            System.out.println("[ERROR] " + e.getMessage());
+        }
+    }
+
+    /*
+    * Opción 2: Enviar un mensaje al foro
     * Permite al usuario escribir un mensaje que se enviará al foro. El mensaje se asocia con el nombre del usuario que lo envía.
     */
     private static void enviarMensaje() {
@@ -157,7 +184,7 @@ public class Cliente {
     }
 
     /*
-    * Opción 2: Ver mensajes recientes del foro
+    * Opción 3: Ver mensajes recientes del foro
     * Muestra los últimos mensajes enviados al foro, incluyendo el nombre del remitente y el contenido del mensaje
     */
     private static void verMensajesRecientes() {
@@ -183,7 +210,7 @@ public class Cliente {
     }
 
     /*
-    * Opción 3: Ver lista de usuarios registrados en el foro
+    * Opción 4: Ver lista de usuarios registrados en el foro
     * Muestra la lista de nombres de usuario registrados en el sistema  
     */
     private static void verListaUsuarios() {
@@ -209,7 +236,7 @@ public class Cliente {
     }
 
     /*
-    * Opción 4: Ver estadísticas del foro
+    * Opción 5: Ver estadísticas del foro
     * Muestra el número total de usuarios registrados y el número total de mensajes enviados en el
     */
     private static void verEstadisticas() {
@@ -221,7 +248,7 @@ public class Cliente {
                 int totalUsuarios = (int) rUsuarios.getResultado();
                 int totalMensajes = (int) rMensajes.getResultado();
                 System.out.println("\n=================================");
-                System.out.println("  ESTADÍSTICAS DEL FORO");
+                System.out.println("  ESTADISTICAS DEL FORO");
                 System.out.println("=================================");
                 System.out.println("Total de usuarios registrados: " + totalUsuarios);
                 System.out.println("Total de mensajes enviados: " + totalMensajes);

@@ -145,6 +145,15 @@ implements Servidor {
             System.out.println("[ServidorMensajes] Servicio registrado en el Broker: obtener_mensajes");
             broker.alta_servicio(NOMBRE_SERVIDOR, "contar_mensajes",List.of(), "int");
             System.out.println("[ServidorMensajes] Servicio registrado en el Broker: contar_mensajes");
+            broker.alta_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje", List.of("int idMensaje"), "String");
+            System.out.println("[ServidorMensajes] Servicio registrado en el Broker: eliminar_mensaje");
+
+            // Probamos a eliminar el servicio de eliminar mensaje después de registrarlo para probar la funcionalidad de baja de servicios
+            // solo recompentando el servidor de mensajes sin reiniciar el broker ni el cliente, y comprobamos que el servicio ya no aparece en la lista de servicios disponibles para los clientes
+            broker.baja_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje");
+            System.out.println("[ServidorMensajes] Servicio eliminado del Broker: eliminar_mensaje");
+
+
             
         } catch (Exception e) {
             System.err.println("[ServidorMensajes] Error al iniciar el servidor: " + e.getMessage());

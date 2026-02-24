@@ -16,11 +16,11 @@ public class ServidorMensajes extends UnicastRemoteObject
 implements Servidor {
 
     // IP y puerto del Broker para el registro del servidor
-    private static final String IP_BROKER = "localhost"; // Lo tengo que cambiar
+    private static final String IP_BROKER = "155.210.154.196"; // Lo tengo que cambiar
     private static final int PUERTO_BROKER = 32000;
 
     // IP y puerto donde el servidor está escuchando en RMI
-    private static final String IP_SERVIDOR = "localhost"; // Lo tengo que cambiar
+    private static final String IP_SERVIDOR = "155.210.154.197"; // Lo tengo que cambiar
     private static final int PUERTO = 32001;
 
     // Nombre único del server para su registro en el Broker

@@ -20,7 +20,7 @@ implements Broker {
     private Map<String, String> servidoresRegistrados; // Mapa de servicios a servidores
 
     // IP del host donde reside el Broker
-    private static final String hostBroker = "localhost"; // Reemplazar con la IP del broker
+    private static final String hostBroker = "155.210.154.196"; // Reemplazar con la IP del broker
     
     // Puerto del rmiregistry del Broker
     private static final int puertoBroker = 32000; // Reemplazar con el puerto del broker

@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class Cliente {
 
     // IP y puerto del Broker (único dato que necesita conocer el cliente)
-    private static final String IP_BROKER  = "localhost";  // Reemplazar con la IP del broker
+    private static final String IP_BROKER  = "155.210.154.196";  // Reemplazar con la IP del broker
     private static final int PUERTO_BROKER = 32000;
 
     private static Broker broker; 
@@ -221,7 +221,7 @@ public class Cliente {
                 int totalUsuarios = (int) rUsuarios.getResultado();
                 int totalMensajes = (int) rMensajes.getResultado();
                 System.out.println("\n=================================");
-                System.out.println("  ESTADÍSTICAS DEL FORO");
+                System.out.println("  ESTADISTICAS DEL FORO");
                 System.out.println("=================================");
                 System.out.println("Total de usuarios registrados: " + totalUsuarios);
                 System.out.println("Total de mensajes enviados: " + totalMensajes);

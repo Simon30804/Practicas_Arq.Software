@@ -12,12 +12,31 @@ import java.util.List;
  * en el código fuente (método obtenerServidorDeServicio). Los servidores
  * registran dinámicamente su ubicación (IP:puerto), pero añadir nuevos
  * servicios requeriría recompilar el Broker.
+ * 
+ * En el nivel avanzao, el broer mantiene un registro dinámico de qué servicios ofrece cada servidor, permitiendo
+ * dar de alta y baja servicios sin necesidad de recompilar el Broker.
  */
 
 public class BrokerImpl extends UnicastRemoteObject 
 implements Broker {
     // Mapa para almacenar los servidores registrados (nombre_servidor -> host_remoto_IP_puerto)
-    private Map<String, String> servidoresRegistrados; // Mapa de servicios a servidores
+    private Map<String, String> servidoresRegistrados = new HashMap<>(); // Mapa de servicios a servidores
+    // Mapa para almacenar los servicios registrados (nombre_servicio -> InfoServicio)
+    private Map<String, InfoServicio> serviciosRegistrados = new HashMap<>(); // Mapa de servicios a servidores
+
+    private static class InfoServicio {
+        String nombreServidor;
+        String nombreServicio;
+        List<Object> listaParametros;
+        String tipoRetorno;
+
+        public InfoServicio(String nombreServidor, String nombreServicio, List<Object> listaParametros, String tipoRetorno) {
+            this.nombreServidor = nombreServidor;
+            this.nombreServicio = nombreServicio;
+            this.listaParametros = listaParametros;
+            this.tipoRetorno = tipoRetorno;
+        }
+    }
 
     // IP del host donde reside el Broker
     private static final String hostBroker = "localhost"; // Reemplazar con la IP del broker
@@ -42,25 +61,62 @@ implements Broker {
         System.out.println("[Broker] Servidor registrado: " + nombre_servidor + " en " + host_remoto_IP_puerto);
     }
 
-    /**
-     * Mapeo estático entre nombre de servicio y nombre de servidor que lo ofrece.
-     * En el nivel básico este mapeo está hardcodeado.
-     * Para añadir nuevos servicios habría que recompilar el Broker.
-     */
-    private String obtenerServidorDeServicio(String nom_servicio) {
-        switch (nom_servicio) {
-            case "enviar_mensaje":
-            case "obtener_mensajes":
-            case "eliminar_mensaje":
-            case "contar_mensajes":
-                return "ServidorMensajes8698";
-            case "registrar_usuario":
-            case "obtener_usuarios":
-            case "contar_usuarios":
-                return "ServidorUsuarios8698";
-            default:
-                return null;
+    @Override 
+    public void alta_servicio(String nombre_servidor, String nom_servicio, List<Object> lista_param, String tipo_retorno) throws RemoteException {
+        // Verificar que el servidor esté registrado
+        if (!servidoresRegistrados.containsKey(nombre_servidor)) {
+            System.out.println("[Broker] ERROR: Intento de alta de servicio '"
+                    + nom_servicio + "' de servidor no registrado: " + nombre_servidor);
+            throw new RemoteException("Servidor no registrado: " + nombre_servidor);
         }
+
+        InfoServicio info = new InfoServicio(nombre_servidor, nom_servicio, lista_param, tipo_retorno);
+        serviciosRegistrados.put(nom_servicio, info);
+        
+        System.out.println("[Broker] Servicio registrado: " + nom_servicio
+                + " del servidor " + nombre_servidor);
+    }
+
+    @Override
+    public void baja_servicio(String nombre_servidor, String nom_servicio) throws RemoteException {
+        InfoServicio info = serviciosRegistrados.get(nom_servicio);
+
+        if (info == null) {
+            System.out.println("[Broker] ERROR: Intento de baja de servicio no registrado: " + nom_servicio);
+            throw new RemoteException("Servicio no registrado: " + nom_servicio);
+        }
+
+        if (!info.nombreServidor.equals(nombre_servidor)) {
+            System.out.println("[Broker] ERROR: Intento de baja de servicio '"
+                    + nom_servicio + "' por servidor no propietario: " + nombre_servidor);
+            throw new RemoteException("Servidor no propietario del servicio: " + nombre_servidor);
+        }
+
+        serviciosRegistrados.remove(nom_servicio);
+        System.out.println("[Broker] Servicio dado de baja: " + nom_servicio + " del servidor " + nombre_servidor);
+    } 
+
+    /* API para los clientes */
+
+    /**
+    * Lista todos los servicios actualmente registrados en el broker.
+    * 
+    * @return Objeto Servicios con la lista completa de servicios disponibles
+    */
+    @Override
+    public Servicios lista_servicios() throws RemoteException {
+        Servicios servicios = new Servicios();
+
+        for(InfoServicio info : serviciosRegistrados.values()) {
+            Servicios.Servicio servicio = new Servicios.Servicio(
+                    info.nombreServidor,
+                    info.nombreServicio,
+                    info.listaParametros,
+                    info.tipoRetorno
+            );
+            servicios.anadirServicio(servicio);
+        }
+        return servicios;
     }
 
     /**
@@ -73,7 +129,8 @@ implements Broker {
                 + " con parámetros: " + parametros_servicio);
 
         // 1. Determinar qué servidor ofrece este servicio
-        String nombreServidor = obtenerServidorDeServicio(nom_servicio);
+        InfoServicio servicioInfo = serviciosRegistrados.get(nom_servicio);
+        String nombreServidor =  servicioInfo.nombreServidor;
         if (nombreServidor == null) {
             System.out.println("[Broker] Servicio desconocido: " + nom_servicio);
             return new Respuesta("Servicio desconocido: " + nom_servicio);

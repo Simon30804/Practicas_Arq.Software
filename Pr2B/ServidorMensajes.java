@@ -138,6 +138,14 @@ implements Servidor {
             broker.registrar_servidor(NOMBRE_SERVIDOR, direccionRMI);
             System.out.println("[ServidorMensajes] Servicio registrado en el Broker: " + NOMBRE_SERVIDOR);
 
+            // Registramos los serivicos que ofrecenis de manera dinámica para que el Broker los tenga disponibles para los clientes
+            broker.alta_servicio(NOMBRE_SERVIDOR, "enviar_mensaje", List.of("String remitente", "String mensaje"), "String");
+            System.out.println("[ServidorMensajes] Servicio registrado en el Broker: enviar_mensaje");
+            broker.alta_servicio(NOMBRE_SERVIDOR, "obtener_mensajes", List.of("int N"), "List<Mensaje>");
+            System.out.println("[ServidorMensajes] Servicio registrado en el Broker: obtener_mensajes");
+            broker.alta_servicio(NOMBRE_SERVIDOR, "contar_mensajes",List.of(), "int");
+            System.out.println("[ServidorMensajes] Servicio registrado en el Broker: contar_mensajes");
+            
         } catch (Exception e) {
             System.err.println("[ServidorMensajes] Error al iniciar el servidor: " + e.getMessage());
             e.printStackTrace();

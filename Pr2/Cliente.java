@@ -9,7 +9,7 @@ public class Cliente {
         try{
             //Paso 1-Obtener una referencia al objeto servidor creado anteriormente
             //Nombre del host servidor o su IP. Es dónde se buscará al objeto remoto
-            String hostname = "10.1.66.64:3007"; //se puede usar "IP: puerto"
+            String hostname = "localhost"; //se puede usar "IP: puerto"
             Collection server = (Collection) Naming.lookup("//"+hostname + "/MyCollection");
             System.out.println("[Cliente] Conexión establecida con el servidor.");
 

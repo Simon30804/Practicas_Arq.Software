@@ -19,7 +19,7 @@ implements Servidor {
 
     // IP y puerto donde el servidor está escuchando en RMI
     private static final String IP_SERVIDOR = "localhost"; // Lo tengo que cambiar
-    private static final int PUERTO = 32001;
+    private static final int PUERTO = 32002;
 
     // Nombre único del server para su registro en el Broker
     private static final String NOMBRE_SERVIDOR = "ServidorUsuarios8698";
@@ -111,6 +111,15 @@ implements Servidor {
             Broker broker = (Broker) Naming.lookup("//" + IP_BROKER + ":" + PUERTO_BROKER + "/Broker800");
             broker.registrar_servidor(NOMBRE_SERVIDOR, direccionRMI);
             System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: " + NOMBRE_SERVIDOR);
+
+            // Registramos los serivicos que ofrecenis de manera dinámica para que el Broker los tenga disponibles para los clientes
+            broker.alta_servicio(NOMBRE_SERVIDOR, "registrar_usuario", List.of("String nombreUsuario"), "String");
+            System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: registrar_usuario");
+            broker.alta_servicio(NOMBRE_SERVIDOR, "obtener_usuarios", List.of(), "List<String>");
+            System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: obtener_usuarios");
+            broker.alta_servicio(NOMBRE_SERVIDOR, "contar_usuarios", List.of(), "int");
+            System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: contar_usuarios");
+
         } catch (Exception e) {
             System.err.println("[ServidorUsuarios] Error al iniciar el servidor: " + e.getMessage());
             e.printStackTrace();

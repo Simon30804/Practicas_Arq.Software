@@ -38,9 +38,13 @@ ping 155.210.154.198
 # EJECUCIÓN SOBRE LAS MÁQUINAS DEL LABORATORIO
 # 1. Conectarte por SSH a la máquina del broker
 ssh a869800@155.210.154.196
+ssh a869800@155.210.154.197
+ssh a869800@155.210.154.198
 
 # 2. Copiar todos los archivos .java a esa máquina
 scp *.java a869800@155.210.154.196:~/practica_broker/
+scp *.java a869800@155.210.154.197:~/practica_broker/
+scp *.java a869800@155.210.154.198:~/practica_broker/
 
 # Ir al directorio
 cd ~/practica_broker
@@ -54,7 +58,7 @@ ps aux | grep rmiregistry
 # Si hay alguno, matarlo
 kill -9 PID_del_proceso
 
-# 4. Lanzar rmiregistry en esa máquina
+# 4. Lanzar rmiregistry en cada máquina
 rmiregistry 32000 &
 rmiregistry 32001 & 
 rmiregistry 32002 &

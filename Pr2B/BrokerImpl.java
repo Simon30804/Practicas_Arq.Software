@@ -4,6 +4,8 @@ import java.rmi.Naming;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.concurrent.*;
 
 /**
  * Implementación del Broker.
@@ -24,6 +26,12 @@ implements Broker {
     // Mapa para almacenar los servicios registrados (nombre_servicio -> InfoServicio)
     private Map<String, InfoServicio> serviciosRegistrados = new HashMap<>(); // Mapa de servicios a servidores
 
+    // Para gestionar las peticiones asíncronas (clave: clienteId:nombreServicio -> PeticionAsincrona)
+    private Map<String, PeticionAsincrona> peticionAsincrona = new HashMap<>();
+
+    // Pool de hilos para ejecutar servicios asíncronos
+    private Executor executorService = Executors.newCachedThreadPool(); ;
+
     private static class InfoServicio {
         String nombreServidor;
         String nombreServicio;
@@ -38,11 +46,27 @@ implements Broker {
         }
     }
 
+    private static class PeticionAsincrona {
+        String clienteId;
+        String nomServicio;
+        Respuesta respuesta;
+        boolean enEjecucion;
+        boolean respuestaEntregada;
+
+        public PeticionAsincrona(String clienteId, String nomServicio) {
+            this.clienteId = clienteId;
+            this.nomServicio = nomServicio;
+            this.respuesta = null;
+            this.enEjecucion = true;
+            this.respuestaEntregada = false;
+        }
+    } 
+
     // IP del host donde reside el Broker
-    private static final String hostBroker = "localhost"; // Reemplazar con la IP del broker
+    private static final String hostBroker = "155.210.154.196";
     
     // Puerto del rmiregistry del Broker
-    private static final int puertoBroker = 32000; // Reemplazar con el puerto del broker
+    private static final int puertoBroker = 32000; 
 
     // Constructor
     public BrokerImpl() throws RemoteException {
@@ -137,6 +161,127 @@ implements Broker {
         }
 
         // 2. Obtener la dirección del servidor
+        String direccionServidor = servidoresRegistrados.get(nombreServidor);
+        if (direccionServidor == null) {
+            System.out.println("[Broker] Servidor no registrado: " + nombreServidor);
+            return new Respuesta("Servidor no registrado: " + nombreServidor);
+        }
+
+        // 3. Invocar el servicio en el servidor correspondiente
+        try {
+            Servidor servidor = (Servidor) Naming.lookup(
+                    "//" + direccionServidor + "/" + nombreServidor);
+            Respuesta r = servidor.ejecutarServicio(nom_servicio, parametros_servicio);
+            System.out.println("[Broker] Respuesta obtenida: " + r);
+            return r;
+        } catch (Exception e) {
+            System.out.println("[Broker] Error al invocar servidor: " + e);
+            return new Respuesta("Error al invocar servidor: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void ejecutar_servicio_asinc(String clienteId, String nom_servicio, List<Object> parametros_servicio) throws RemoteException {
+       System.out.println("[Broker] Petición ASÍNCRONA de servicio: " + nom_servicio
+                + " del cliente: " + clienteId);
+
+        String clave = clienteId + ":" + nom_servicio;
+
+        // RESTRICCIÓN: Verificar que no haya una petición pendiente del mismo servicio
+        if (peticionAsincrona.containsKey(clave)) {
+            PeticionAsincrona peticionExistente = peticionAsincrona.get(clave);
+            if (!peticionExistente.respuestaEntregada) {
+                System.out.println("[Broker] ERROR: El cliente " + clienteId
+                        + " ya tiene una petición pendiente de " + nom_servicio);
+                throw new RemoteException("Ya existe una petición pendiente del servicio "
+                        + nom_servicio + ". Recoge la respuesta antes de solicitar de nuevo.");
+            }
+        }
+
+        // Crear registro de la petición asíncrona
+        PeticionAsincrona peticion = new PeticionAsincrona(clienteId, nom_servicio);
+        peticionAsincrona.put(clave, peticion);
+
+        // Ejecutar el servicio en un thread separado
+        executorService.execute(() -> {
+            try {
+                System.out.println("[Broker] Ejecutando en background: " + nom_servicio
+                        + " para cliente " + clienteId);
+                
+                Respuesta respuesta = ejecutarServicioInterno(nom_servicio, parametros_servicio);
+                
+                peticion.respuesta = respuesta;
+                peticion.enEjecucion = false;
+                
+                System.out.println("[Broker] Servicio " + nom_servicio
+                        + " completado para cliente " + clienteId);
+                
+            } catch (Exception e) {
+                peticion.respuesta = new Respuesta("Error en ejecución asíncrona: "
+                        + e.getMessage());
+                peticion.enEjecucion = false;
+                System.out.println("[Broker] Error en ejecución asíncrona: " + e);
+            }
+        });
+
+        System.out.println("[Broker] Petición asíncrona registrada. Cliente puede continuar.");
+    }
+
+    @Override
+    public Respuesta obtener_respuesta_asinc(String clienteId, String nom_servicio) throws RemoteException {
+        System.out.println("[Broker] Cliente " + clienteId
+                + " solicita respuesta de: " + nom_servicio);
+
+        String clave = clienteId + ":" + nom_servicio;
+        PeticionAsincrona peticion = peticionAsincrona.get(clave);
+
+        // ERROR 1: El cliente no había solicitado el servicio
+        if (peticion == null) {
+            System.out.println("[Broker] ERROR: No existe petición de " + nom_servicio
+                    + " para el cliente " + clienteId);
+            return new Respuesta("ERROR: No has solicitado el servicio " + nom_servicio);
+        }
+
+        // ERROR 2: El cliente que solicita no es el mismo que hizo la petición
+        if (!peticion.clienteId.equals(clienteId)) {
+            System.out.println("[Broker] ERROR: Cliente " + clienteId
+                    + " intenta obtener respuesta de petición de otro cliente");
+            return new Respuesta("ERROR: Esta petición no te pertenece");
+        }
+
+        // ERROR 3: La respuesta ya fue entregada anteriormente
+        if (peticion.respuestaEntregada) {
+            System.out.println("[Broker] ERROR: Respuesta de " + nom_servicio
+                    + " ya fue entregada a " + clienteId);
+            return new Respuesta("ERROR: La respuesta ya fue entregada anteriormente");
+        }
+
+        // Si aún está en ejecución
+        if (peticion.enEjecucion) {
+            System.out.println("[Broker] El servicio " + nom_servicio
+                    + " aún está en ejecución");
+            return new Respuesta("El servicio aún está en ejecución. Intenta más tarde.");
+        }
+
+        // Respuesta disponible - marcar como entregada
+        peticion.respuestaEntregada = true;
+        System.out.println("[Broker] Respuesta de " + nom_servicio
+                + " entregada a " + clienteId);
+
+        return peticion.respuesta;
+    }
+
+    private Respuesta ejecutarServicioInterno(String nom_servicio,
+                                             List<Object> parametros_servicio) {
+        // 1. Buscar el servicio en el registro dinámico
+        InfoServicio infoServicio = serviciosRegistrados.get(nom_servicio);
+        if (infoServicio == null) {
+            System.out.println("[Broker] Servicio desconocido: " + nom_servicio);
+            return new Respuesta("Servicio desconocido: " + nom_servicio);
+        }
+
+        // 2. Obtener la dirección del servidor
+        String nombreServidor = infoServicio.nombreServidor;
         String direccionServidor = servidoresRegistrados.get(nombreServidor);
         if (direccionServidor == null) {
             System.out.println("[Broker] Servidor no registrado: " + nombreServidor);

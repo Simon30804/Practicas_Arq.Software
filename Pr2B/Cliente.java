@@ -14,7 +14,7 @@ import java.util.Scanner;
 public class Cliente {
 
     // IP y puerto del Broker (único dato que necesita conocer el cliente)
-    private static final String IP_BROKER  = "localhost";  // Reemplazar con la IP del broker
+    private static final String IP_BROKER  = "155.210.154.196";  // Reemplazar con la IP del broker
     private static final int PUERTO_BROKER = 32000;
 
     private static Broker broker; 

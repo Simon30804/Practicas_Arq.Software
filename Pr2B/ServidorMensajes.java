@@ -16,11 +16,11 @@ public class ServidorMensajes extends UnicastRemoteObject
 implements Servidor {
 
     // IP y puerto del Broker para el registro del servidor
-    private static final String IP_BROKER = "localhost"; // Lo tengo que cambiar
+    private static final String IP_BROKER = "155.210.154.196"; 
     private static final int PUERTO_BROKER = 32000;
 
     // IP y puerto donde el servidor está escuchando en RMI
-    private static final String IP_SERVIDOR = "localhost"; // Lo tengo que cambiar
+    private static final String IP_SERVIDOR = "155.210.154.197"; 
     private static final int PUERTO = 32001;
 
     // Nombre único del server para su registro en el Broker
@@ -150,10 +150,11 @@ implements Servidor {
 
             // Probamos a eliminar el servicio de eliminar mensaje después de registrarlo para probar la funcionalidad de baja de servicios
             // solo recompentando el servidor de mensajes sin reiniciar el broker ni el cliente, y comprobamos que el servicio ya no aparece en la lista de servicios disponibles para los clientes
-            broker.baja_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje");
-            System.out.println("[ServidorMensajes] Servicio eliminado del Broker: eliminar_mensaje");
-
-
+            //broker.baja_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje");
+            //System.out.println("[ServidorMensajes] Servicio eliminado del Broker: eliminar_mensaje");
+            //
+            //broker.baja_servicio(NOMBRE_SERVIDOR, "contar_mensajes");
+            //System.out.println("[ServidorMensajes] Servicio eliminado del Broker: contar_mensajes");
             
         } catch (Exception e) {
             System.err.println("[ServidorMensajes] Error al iniciar el servidor: " + e.getMessage());

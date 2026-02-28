@@ -48,4 +48,37 @@ public interface Broker extends Remote {
      */
     Respuesta ejecutar_servicio(String nom_servicio, List<Object> parametros_servicio)
             throws RemoteException;
+
+    /**
+     * Solicita la ejecución ASÍNCRONA de un servicio.
+     * El cliente NO espera la respuesta, puede continuar haciendo otras cosas.
+     * La respuesta se almacena en el broker hasta que el cliente la solicite.
+     * 
+     * RESTRICCIÓN: Un cliente no puede solicitar el mismo servicio dos veces
+     * sin haber recogido la respuesta anterior.
+     * 
+     * @param clienteId Identificador único del cliente que hace la petición
+     * @param nom_servicio Nombre del servicio a ejecutar
+     * @param parametros_servicio Lista de parámetros necesarios
+     */
+    void ejecutar_servicio_asinc(String clienteId, String nom_servicio,
+                                 List<Object> parametros_servicio)
+            throws RemoteException;
+
+    /**
+     * Obtiene la respuesta de una ejecución asíncrona previa.
+     * 
+     * ERRORES que puede devolver:
+     * - El cliente no había solicitado previamente el servicio
+     * - El cliente que solicita la respuesta no es el mismo que hizo la petición
+     * - La respuesta ya fue entregada anteriormente
+     * - La respuesta aún no está disponible (servicio en ejecución)
+     * 
+     * @param clienteId Identificador del cliente que solicita la respuesta
+     * @param nom_servicio Nombre del servicio del que se quiere obtener respuesta
+     * @return Respuesta con el resultado o un mensaje de error
+     */
+    Respuesta obtener_respuesta_asinc(String clienteId, String nom_servicio)
+            throws RemoteException;
+            
 }

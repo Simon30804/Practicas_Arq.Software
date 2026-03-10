@@ -21,51 +21,52 @@ java -Djava.rmi.server.hostname=localhost ServidorMensajes
 java Cliente
 
 
-# Primero debo de encender las máquinas remotas
+# Primero debemos de encender las máquinas remotas, para ello nos conectamos a central:
 ssh a869800@central.cps.unizar.es
 
-# Encender máquina 197 (Servidores)
+# Encendemos las máquinas 196, 197 y 198, donde lanzaremos el Broker, los Servidores y el Cliente
 /usr/local/etc/wake -y lab102-196
 /usr/local/etc/wake -y lab102-197
 /usr/local/etc/wake -y lab102-198
 
 
-# Verificar que responden
+# Verificamos que responden
 ping 155.210.154.196
 ping 155.210.154.197
 ping 155.210.154.198
 
 # EJECUCIÓN SOBRE LAS MÁQUINAS DEL LABORATORIO
-# 1. Conectarte por SSH a la máquina del broker
+# 1. Nos conectamos por SSH a la máquina del Broker, de los Servidores y del Cliente
 ssh a869800@155.210.154.196
 ssh a869800@155.210.154.197
 ssh a869800@155.210.154.198
 
-# 2. Copiar todos los archivos .java a esa máquina
+# 2. Copiamos todos los archivos .java en la máquina
 scp *.java a869800@155.210.154.196:~/practica_broker/
 scp *.java a869800@155.210.154.197:~/practica_broker/
 scp *.java a869800@155.210.154.198:~/practica_broker/
 
-# Ir al directorio
+# Vamos al directorio
 cd ~/practica_broker
 
-# 3. Compilar en la máquina remota
+# 3. Compilamos los archivos en la máquina remota
 javac *.java
 
-# Verificar si ya hay un rmiregistry corriendo
+# Verificamos si ya hay un rmiregistry corriendo
 ps aux | grep rmiregistry
 
 # Si hay alguno, matarlo
 kill -9 PID_del_proceso
 
-# 4. Lanzar rmiregistry en cada máquina
+# 4. Lanzamos rmiregistry en cada máquina
 rmiregistry 32000 & (96)
 rmiregistry 32001 & (97)
 rmiregistry 32002 & (97)
 
-# 5. Lanzar el Broker en esa máquina
+# 5. Lanzamos el Broker, los Servidores y los Clientes 
 java -Djava.rmi.server.hostname=155.210.154.196 BrokerImpl
 java -Djava.rmi.server.hostname=155.210.154.197 ServidorMensajes & 
 java -Djava.rmi.server.hostname=155.210.154.197 ServidorUsuarios &
-El cliente simplemente compilo: javac Cliente.java, y lo lanzo java Cliente
+El cliente síncrono simplemente compilo: javac Cliente.java y lo lanzo con: java Cliente
+El cliente asíncrono simplemente compilo: javac ClienteAsincrono.java y lo lanzo con: java ClienteAsincrono
 # En el 96->Broker, 97->Servers. 98->Cliente

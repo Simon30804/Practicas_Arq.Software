@@ -187,7 +187,7 @@ implements Broker {
 
         String clave = clienteId + ":" + nom_servicio;
 
-        // RESTRICCIÓN: Verificar que no haya una petición pendiente del mismo servicio
+        // RESTRICCIÓN: Verificamos que no haya una petición pendiente del mismo servicio por parte del mismo cliente
         if (peticionAsincrona.containsKey(clave)) {
             PeticionAsincrona peticionExistente = peticionAsincrona.get(clave);
             if (!peticionExistente.respuestaEntregada) {
@@ -198,11 +198,11 @@ implements Broker {
             }
         }
 
-        // Crear registro de la petición asíncrona
+        // Creamos el registro de la petición asíncrona
         PeticionAsincrona peticion = new PeticionAsincrona(clienteId, nom_servicio);
         peticionAsincrona.put(clave, peticion);
 
-        // Ejecutar el servicio en un thread separado
+        // Ejecutamos el servicio en un thread separado, para no bloquear el hilo del Broker y poder atender otras peticiones mientras tanto
         executorService.execute(() -> {
             try {
                 System.out.println("[Broker] Ejecutando en background: " + nom_servicio
@@ -224,7 +224,7 @@ implements Broker {
             }
         });
 
-        System.out.println("[Broker] Petición asíncrona registrada. Cliente puede continuar.");
+        System.out.println("[Broker] Petición asíncrona registrada correctamente. El Cliente puede continuar.");
     }
 
     @Override
@@ -249,21 +249,21 @@ implements Broker {
             return new Respuesta("ERROR: Esta petición no te pertenece");
         }
 
-        // ERROR 3: La respuesta ya fue entregada anteriormente
+        // ERROR 3: La respuesta ya fue entregada previamente
         if (peticion.respuestaEntregada) {
             System.out.println("[Broker] ERROR: Respuesta de " + nom_servicio
                     + " ya fue entregada a " + clienteId);
-            return new Respuesta("ERROR: La respuesta ya fue entregada anteriormente");
+            return new Respuesta("ERROR: La respuesta ya ha sido entregada previamente");
         }
 
         // Si aún está en ejecución
         if (peticion.enEjecucion) {
             System.out.println("[Broker] El servicio " + nom_servicio
                     + " aún está en ejecución");
-            return new Respuesta("El servicio aún está en ejecución. Intenta más tarde.");
+            return new Respuesta("El servicio aún está en ejecución. Intentalo de nuevo más tarde.");
         }
 
-        // Respuesta disponible - marcar como entregada
+        // Respuesta disponible - marcamos que ha sido entregada
         peticion.respuestaEntregada = true;
         System.out.println("[Broker] Respuesta de " + nom_servicio
                 + " entregada a " + clienteId);
@@ -273,14 +273,14 @@ implements Broker {
 
     private Respuesta ejecutarServicioInterno(String nom_servicio,
                                              List<Object> parametros_servicio) {
-        // 1. Buscar el servicio en el registro dinámico
+        // 1. Buscamos el servicio en el registro dinámico
         InfoServicio infoServicio = serviciosRegistrados.get(nom_servicio);
         if (infoServicio == null) {
             System.out.println("[Broker] Servicio desconocido: " + nom_servicio);
             return new Respuesta("Servicio desconocido: " + nom_servicio);
         }
 
-        // 2. Obtener la dirección del servidor
+        // 2. Obtenemosla dirección del servidor
         String nombreServidor = infoServicio.nombreServidor;
         String direccionServidor = servidoresRegistrados.get(nombreServidor);
         if (direccionServidor == null) {
@@ -288,7 +288,7 @@ implements Broker {
             return new Respuesta("Servidor no registrado: " + nombreServidor);
         }
 
-        // 3. Invocar el servicio en el servidor correspondiente
+        // 3. Invocamos el servicio en el servidor correspondiente
         try {
             Servidor servidor = (Servidor) Naming.lookup(
                     "//" + direccionServidor + "/" + nombreServidor);

@@ -99,6 +99,57 @@ implements Servidor {
         return new Respuesta(numeroUsuarios);
     }
 
+    /**
+     * Menú auxiliar del servidor, para poder dar de alta/baja servicios de manera dinámimca
+     */
+    // Para evitar tener que dar de baja servicios de manera manual, vamos a crear en el servidor un menu interactivo el cual nos permita 
+            // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
+            //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
+            // los servicios para los clientes en tiempo real.
+    private static void menuPrincipal() {
+        System.out.println("\n=================================");
+        System.out.println("     MENÚ DE GESTIÓN DE SERVICIOS");
+        System.out.println("=================================");
+        System.out.println("1. Dar de baja servicio 'obtener_usuarios'");
+        System.out.println("2. Dar de alta servicio 'obtener_usuarios'");        
+        System.out.println("3. Dar de baja servicio 'contar_usuarios'");
+        System.out.println("4. Dar de alta servicio 'contar_usuarios'");
+        System.out.println("5. Salir");
+        System.out.print("Selecciona una opción: ");
+
+        try {
+            int opcion = Integer.parseInt(System.console().readLine());
+            Broker broker = (Broker) Naming.lookup("//" + IP_BROKER + ":" + PUERTO_BROKER + "/Broker800");
+
+            switch (opcion) {
+                case 1:
+                    broker.baja_servicio(NOMBRE_SERVIDOR, "obtener_usuarios");
+                    System.out.println("Servicio 'obtener_usuarios' dado de baja");
+                    break;
+                case 2:
+                    broker.alta_servicio(NOMBRE_SERVIDOR, "obtener_usuarios", List.of(), "List<String>");
+                    System.out.println("Servicio 'obtener_usuarios' dado de alta");
+                    break;
+                case 3:
+                    broker.baja_servicio(NOMBRE_SERVIDOR, "contar_usuarios");
+                    System.out.println("Servicio 'contar_usuarios' dado de baja");
+                    break;
+                case 4:
+                    broker.alta_servicio(NOMBRE_SERVIDOR, "contar_usuarios", List.of(), "int");
+                    System.out.println("Servicio 'contar_usuarios' dado de alta");
+                    break;
+                case 5:
+                    System.out.println("Saliendo del menú...");
+                    System.exit(0);
+                default:
+                    System.out.println("Opción no válida. Inténtalo de nuevo.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error en el menú: " + e.getMessage());
+        }
+    }
+    
+
     public static void main(String[] args) {
         try {
             // Creamos y registramos el Objeto en el rmiregistry para que el Broker pueda localizarlo
@@ -119,6 +170,13 @@ implements Servidor {
             System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: obtener_usuarios");
             broker.alta_servicio(NOMBRE_SERVIDOR, "contar_usuarios", List.of(), "int");
             System.out.println("[ServidorUsuarios] Servicio registrado en el Broker: contar_usuarios");
+
+            // Para evitar tener que dar de baja servicios de manera manual, vamos a crear en el servidor un menu interactivo el cual nos permita 
+            // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
+            //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
+            // los servicios para los clientes en tiempo real.
+            menuPrincipal();
+
 
         } catch (Exception e) {
             System.err.println("[ServidorUsuarios] Error al iniciar el servidor: " + e.getMessage());

@@ -124,6 +124,53 @@ implements Servidor {
         return new Respuesta(numeroMensajes);
     }
 
+    /**
+     * Menú auxiliar del servidor, para poder dar de alta/baja servicios de manera dinámimca
+     */
+    private static void menuPrincipal() {
+        System.out.println("\n=================================");
+        System.out.println("     MENÚ DE GESTIÓN DE SERVICIOS");
+        System.out.println("=================================");
+        System.out.println("1. Dar de baja servicio 'eliminar_mensaje'");
+        System.out.println("2. Dar de alta servicio 'eliminar_mensaje'");        
+        System.out.println("3. Dar de baja servicio 'contar_mensajes'");
+        System.out.println("4. Dar de alta servicio 'contar_mensajes'");
+        System.out.println("5. Salir");
+        System.out.print("Selecciona una opción: ");
+
+        try {
+            int opcion = Integer.parseInt(System.console().readLine());
+            Broker broker = (Broker) Naming.lookup("//" + IP_BROKER + ":" + PUERTO_BROKER + "/Broker800");
+
+            switch (opcion) {
+                case 1:
+                    broker.baja_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje");
+                    System.out.println("[ServidorMensajes] Servicio eliminado del Broker: eliminar_mensaje");
+                    break;
+                case 2:
+                    broker.alta_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje", List.of("int idMensaje"), "String");
+                    System.out.println("[ServidorMensajes] Servicio registrado en el Broker: eliminar_mensaje");
+                    break;
+                case 3:
+                    broker.baja_servicio(NOMBRE_SERVIDOR, "contar_mensajes");
+                    System.out.println("[ServidorMensajes] Servicio eliminado del Broker: contar_mensajes");
+                    break;
+                case 4:
+                    broker.alta_servicio(NOMBRE_SERVIDOR, "contar_mensajes",List.of(), "int");
+                    System.out.println("[ServidorMensajes] Servicio registrado en el Broker: contar_mensajes");
+                    break;
+                case 5:
+                    System.out.println("Saliendo del menú...");
+                    System.exit(0);
+                default:
+                    System.out.println("Opción no válida. Saliendo del menú...");
+            }
+        } catch (Exception e) {
+            System.err.println("[ServidorMensajes] Error en el menú: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
 
     public static void main(String[] args) {
         try {
@@ -147,6 +194,13 @@ implements Servidor {
             System.out.println("[ServidorMensajes] Servicio registrado en el Broker: contar_mensajes");
             broker.alta_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje", List.of("int idMensaje"), "String");
             System.out.println("[ServidorMensajes] Servicio registrado en el Broker: eliminar_mensaje");
+
+            // Para evitar tener que dar de baja servicios de manera manual, vamos a crear en el servidor un menu interactivo el cual nos permita 
+            // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
+            //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
+            // los servicios para los clientes en tiempo real.
+            menuPrincipal();
+
 
             // Probamos a eliminar el servicio de eliminar mensaje después de registrarlo para probar la funcionalidad de baja de servicios
             // solo recompentando el servidor de mensajes sin reiniciar el broker ni el cliente, y comprobamos que el servicio ya no aparece en la lista de servicios disponibles para los clientes

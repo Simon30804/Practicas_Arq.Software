@@ -71,7 +71,5 @@ El cliente síncrono simplemente compilo: javac Cliente.java y lo lanzo con: jav
 El cliente asíncrono simplemente compilo: javac ClienteAsincrono.java y lo lanzo con: java ClienteAsincrono
 # En el 96->Broker, 97->Servers. 98->Cliente
 
-# Comprobamos que los servicios se registran de manera dinámica en el Broker, de manera que solo necesitamos recompilar y ejecutar de nuevo el servidor, tanto el Broker, como el Cliente pueden mantener su ejecución 
-Primero verificamos si el rmiregistry corriendo: ps aux | grep rmiregistry
-Matamos el rmiregistry correspondiente al ServidorMensajes, (el que lanzado en 32001): kill -9 PID_del_proceso
-Damos de baja uno de los servicios registrados en el ServidorMensajes (Descomentando la linea 157 comentada)
+# Comprobamos que los servicios se registran de manera dinámica en el Broker, tanto el Broker, como el Cliente pueden mantener su ejecución 
+Para ello hacemos uso de los menus interactivos disponibles en los servidores (ServidorMensajes, ServidorUsuarios), los cuáles nos permiten dar de alta y de baja servicios, de manera que tanto el Cliente como el Borker pueden mantener su ejecución.

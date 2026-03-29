@@ -175,7 +175,9 @@ implements Servidor {
             // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
             //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
             // los servicios para los clientes en tiempo real.
-            menuPrincipal();
+            while(true) {
+                menuPrincipal();
+            }
 
 
         } catch (Exception e) {

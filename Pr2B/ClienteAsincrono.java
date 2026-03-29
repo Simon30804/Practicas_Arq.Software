@@ -5,11 +5,11 @@ import java.util.UUID;
 /**
  * Cliente de DEMOSTRACIÓN para el CASO ASÍNCRONO.
  * 
- * Demuestra todos los escenarios requeridos en el PDF (página 6):
+ * Demuestra todos los escenarios en el apartado 3.3 Versiones asíncronas del guion de prácticas:
  * 1. Funcionamiento correcto de comunicación asíncrona
  * 2. Error si el cliente no había solicitado el servicio
  * 3. Error si el cliente que solicita la respuesta no es el mismo
- * 4. Error si la respuesta ya fue entregada
+ * 4. Error si la respuesta ya fue entregada anteriormente
  * 5. Error si intenta solicitar el mismo servicio sin recoger respuesta
  */
 public class ClienteAsincrono {
@@ -40,18 +40,19 @@ public class ClienteAsincrono {
             System.out.println(" ESCENARIOS DE PRUEBA");
             System.out.println("=================================\n");
 
+            // Comprobamos que el menú de gestión de servicios del servidor funciona correctamente, permitiendo dar de baja y alta servicios de manera dinámica
             escenario1_FuncionamientoCorrecto();
             pausa(2);
-
+            // Comprobamos que si el cliente intenta obtener la respuesta de un servicio que no ha solicitado, se gestiona el error correctamente
             escenario2_ServicioNoSolicitado();
             pausa(2);
-
+            // Comprobamos que si un cliente intenta obtener la respuesta de un servicio solicitado por otro cliente, se gestiona el error correctamente
             escenario3_ClienteIncorrecto();
             pausa(2);
-
+            // Comprobamos que si el cliente intenta obtener la respuesta de un servicio que ya ha sido entregada anteriormente, se gestiona el error correctamente
             escenario4_RespuestaYaEntregada();
             pausa(2);
-
+            // Comprobamos que si el cliente intenta solicitar el mismo servicio sin haber recogido la respuesta anterior, se gestiona el error correctamente
             escenario5_SolicitudDuplicada();
 
             System.out.println("\n=================================");
@@ -64,9 +65,7 @@ public class ClienteAsincrono {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ESCENARIO 1: Funcionamiento correcto
-    // ═══════════════════════════════════════════════════════════════
     private static void escenario1_FuncionamientoCorrecto() throws Exception {
         System.out.println("=======================================");
         System.out.println(" ESCENARIO 1: Funcionamiento correcto");
@@ -77,7 +76,7 @@ public class ClienteAsincrono {
         broker.ejecutar_servicio_asinc(clienteId, "contar_usuarios", Arrays.asList());
         System.out.println("Petición asíncrona registrada. Cliente procede sin esperar.\n");
 
-        // Simulamos que el cliente hace otras cosas
+        // Simulamos que el cliente hace otras cosas (puede ser cualquier tarea, aquí simplemente imprimimos mensajes y pausamos la ejecución para simular tiempo de procesamiento)
         System.out.println("El Cliente hace otras tareas mientras el servicio se ejecuta...");
         for (int i = 1; i <= 3; i++) {
             System.out.println("  Tarea " + i + " completada...");
@@ -103,9 +102,7 @@ public class ClienteAsincrono {
         System.out.println();
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ESCENARIO 2: Error - Servicio no solicitado
-    // ═══════════════════════════════════════════════════════════════
     private static void escenario2_ServicioNoSolicitado() throws Exception {
         System.out.println("=========================================");
         System.out.println("   ESCENARIO 2: Servicio NO solicitado");
@@ -118,9 +115,7 @@ public class ClienteAsincrono {
         System.out.println("Error gestionado correctamente\n");
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ESCENARIO 3: Error - Cliente incorrecto
-    // ═══════════════════════════════════════════════════════════════
     private static void escenario3_ClienteIncorrecto() throws Exception {
         System.out.println("=========================================");
         System.out.println("   ESCENARIO 3: Cliente incorrecto");
@@ -140,13 +135,11 @@ public class ClienteAsincrono {
         System.out.println(r.getMensaje());
         System.out.println("Error gestionado correctamente\n");
 
-        // Limpiar: Cliente A recoge su respuesta
+        //Cliente A recoge su respuesta
         broker.obtener_respuesta_asinc(clienteA, "obtener_usuarios");
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ESCENARIO 4: Error - Respuesta ya entregada
-    // ═══════════════════════════════════════════════════════════════
     private static void escenario4_RespuestaYaEntregada() throws Exception {
         System.out.println("=========================================");
         System.out.println("   ESCENARIO 4: Respuesta ya entregada");
@@ -166,9 +159,7 @@ public class ClienteAsincrono {
         System.out.println("Error gestionado correctamente\n");
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // ESCENARIO 5: Error - Solicitud duplicada sin recoger respuesta
-    // ═══════════════════════════════════════════════════════════════
     private static void escenario5_SolicitudDuplicada() throws Exception {
         System.out.println("=========================================");
         System.out.println("   ESCENARIO 5: Solicitud duplicada sin recoger respuesta");
@@ -187,7 +178,7 @@ public class ClienteAsincrono {
             System.out.println("Error gestionado correctamente\n");
         }
 
-        // Limpiar: recoger la respuesta pendiente
+        // Recogemos la respuesta pendiente
         System.out.println("Recogiendo la respuesta pendiente para limpiar...");
         pausa(2);
         Respuesta r = broker.obtener_respuesta_asinc(clienteId, "obtener_usuarios");

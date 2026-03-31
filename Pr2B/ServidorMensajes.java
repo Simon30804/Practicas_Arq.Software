@@ -34,7 +34,7 @@ implements Servidor {
     // Constructor del servidor
     public ServidorMensajes() throws RemoteException {
         super();
-        // Añadir algunos mensajes de bienvenida
+        // Añadimos unos mensajes de bienvenida
         mensajes.add(new Mensaje(contadorId++, "Sistema", "Bienvenido al foro basado en RMI y patrón Broker"));
         mensajes.add(new Mensaje(contadorId++, "Sistema", "Puedes enviar mensajes y consultar los últimos mensajes del foro"));
     }
@@ -202,14 +202,6 @@ implements Servidor {
             while(true) {
                 menuPrincipal();
             }
-
-            // Probamos a eliminar el servicio de eliminar mensaje después de registrarlo para probar la funcionalidad de baja de servicios
-            // solo recompentando el servidor de mensajes sin reiniciar el broker ni el cliente, y comprobamos que el servicio ya no aparece en la lista de servicios disponibles para los clientes
-            //broker.baja_servicio(NOMBRE_SERVIDOR, "eliminar_mensaje");
-            //System.out.println("[ServidorMensajes] Servicio eliminado del Broker: eliminar_mensaje");
-            //
-            //broker.baja_servicio(NOMBRE_SERVIDOR, "contar_mensajes");
-            //System.out.println("[ServidorMensajes] Servicio eliminado del Broker: contar_mensajes");
             
         } catch (Exception e) {
             System.err.println("[ServidorMensajes] Error al iniciar el servidor: " + e.getMessage());

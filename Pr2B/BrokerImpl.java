@@ -1,4 +1,6 @@
 import java.rmi.RemoteException;
+import java.rmi.server.RemoteServer;
+import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.Naming;
 import java.util.HashMap;
@@ -9,14 +11,6 @@ import java.util.concurrent.*;
 
 /**
  * Implementación del Broker.
- *
- * En el nivel básico, el mapeo entre servicios y servidores está definido
- * en el código fuente (método obtenerServidorDeServicio). Los servidores
- * registran dinámicamente su ubicación (IP:puerto), pero añadir nuevos
- * servicios requeriría recompilar el Broker.
- * 
- * En el nivel avanzao, el broer mantiene un registro dinámico de qué servicios ofrece cada servidor, permitiendo
- * dar de alta y baja servicios sin necesidad de recompilar el Broker.
  */
 
 public class BrokerImpl extends UnicastRemoteObject 
@@ -74,6 +68,19 @@ implements Broker {
     }
 
     /**
+     * Método auxiliar para obtener IP del cliente RMI. 
+     * Devuelve la dirección IP del cliente que está realizando la llamada RMI actual.
+     * Si por algún motivo no está disponible devuelve "local".
+     */
+    private String getClienteId() {
+        try {
+            return RemoteServer.getClientHost();
+        } catch (ServerNotActiveException e) {
+            return "local";
+        }
+    }   
+
+    /**
      * Los servidores llaman a este método para notificar al Broker su disponibilidad.
      */
     @Override
@@ -85,6 +92,9 @@ implements Broker {
         System.out.println("[Broker] Servidor registrado: " + nombre_servidor + " en " + host_remoto_IP_puerto);
     }
 
+    /**
+     * Los servidores llaman a este método para registrar los servicios que ofrecen.
+     */
     @Override 
     public void alta_servicio(String nombre_servidor, String nom_servicio, List<Object> lista_param, String tipo_retorno) throws RemoteException {
         // Verificar que el servidor esté registrado
@@ -101,6 +111,9 @@ implements Broker {
                 + " del servidor " + nombre_servidor);
     }
 
+    /**
+     * Los servidores llaman a este método para dar de baja un servicio que ya no ofrecen.
+     */
     @Override
     public void baja_servicio(String nombre_servidor, String nom_servicio) throws RemoteException {
         InfoServicio info = serviciosRegistrados.get(nom_servicio);
@@ -152,7 +165,7 @@ implements Broker {
         System.out.println("[Broker] Petición de servicio: " + nom_servicio
                 + " con parámetros: " + parametros_servicio);
 
-        // 1. Determinar qué servidor ofrece este servicio
+        // 1. Determinamos qué servidor ofrece este servicio
         InfoServicio servicioInfo = serviciosRegistrados.get(nom_servicio);
         String nombreServidor =  servicioInfo.nombreServidor;
         if (nombreServidor == null) {
@@ -160,14 +173,14 @@ implements Broker {
             return new Respuesta("Servicio desconocido: " + nom_servicio);
         }
 
-        // 2. Obtener la dirección del servidor
+        // 2. Obtenenemos la dirección del servidor
         String direccionServidor = servidoresRegistrados.get(nombreServidor);
         if (direccionServidor == null) {
             System.out.println("[Broker] Servidor no registrado: " + nombreServidor);
             return new Respuesta("Servidor no registrado: " + nombreServidor);
         }
 
-        // 3. Invocar el servicio en el servidor correspondiente
+        // 3. Invocamos el servicio en el servidor correspondiente
         try {
             Servidor servidor = (Servidor) Naming.lookup(
                     "//" + direccionServidor + "/" + nombreServidor);
@@ -180,12 +193,17 @@ implements Broker {
         }
     }
 
+    /**
+     * Los clientes llaman a este método para solicitar la ejecución de un servicio de forma asíncrona.
+     */
     @Override
-    public void ejecutar_servicio_asinc(String clienteId, String nom_servicio, List<Object> parametros_servicio) throws RemoteException {
-       System.out.println("[Broker] Petición ASÍNCRONA de servicio: " + nom_servicio
-                + " del cliente: " + clienteId);
-
+    public void ejecutar_servicio_asinc( String nom_servicio, List<Object> parametros_servicio) throws RemoteException {
+        String clienteId = getClienteId();
         String clave = clienteId + ":" + nom_servicio;
+        
+        System.out.println("[Broker] Petición ASÍNCRONA de servicio: " + nom_servicio
+                + " del cliente: " + clienteId + " con parámetros: " + parametros_servicio);
+
 
         // RESTRICCIÓN: Verificamos que no haya una petición pendiente del mismo servicio por parte del mismo cliente
         if (peticionAsincrona.containsKey(clave)) {
@@ -227,12 +245,17 @@ implements Broker {
         System.out.println("[Broker] Petición asíncrona registrada correctamente. El Cliente puede continuar.");
     }
 
+    /**
+     * Los clientes llaman a este método para recoger la respuesta de una petición asíncrona previamente realizada con ejecutar_servicio_asinc().
+     */
     @Override
-    public Respuesta obtener_respuesta_asinc(String clienteId, String nom_servicio) throws RemoteException {
+    public Respuesta obtener_respuesta_asinc(String nom_servicio) throws RemoteException {
+        String clienteId = getClienteId();
+        String clave     = clienteId + ":" + nom_servicio;
+
         System.out.println("[Broker] Cliente " + clienteId
                 + " solicita respuesta de: " + nom_servicio);
 
-        String clave = clienteId + ":" + nom_servicio;
         PeticionAsincrona peticion = peticionAsincrona.get(clave);
 
         // ERROR 1: El cliente no había solicitado el servicio
@@ -256,14 +279,14 @@ implements Broker {
             return new Respuesta("ERROR: La respuesta ya ha sido entregada previamente");
         }
 
-        // Si aún está en ejecución
+        // Si aún está en ejecución, informamos al cliente y le indicamos que vuelva a intentarlo más tarde
         if (peticion.enEjecucion) {
             System.out.println("[Broker] El servicio " + nom_servicio
                     + " aún está en ejecución");
             return new Respuesta("El servicio aún está en ejecución. Intentalo de nuevo más tarde.");
         }
 
-        // Respuesta disponible - marcamos que ha sido entregada
+        // Cuando la respuesta esté disponible, entonces marcamos que ha sido entregada
         peticion.respuestaEntregada = true;
         System.out.println("[Broker] Respuesta de " + nom_servicio
                 + " entregada a " + clienteId);
@@ -271,6 +294,12 @@ implements Broker {
         return peticion.respuesta;
     }
 
+    /**
+     * Método interno para ejecutar un servicio de manera síncrona. Utilizado por ejecutar_servicio_asinc() para realizar la invocación.
+     * @param nom_servicio
+     * @param parametros_servicio
+     * @return
+     */
     private Respuesta ejecutarServicioInterno(String nom_servicio,
                                              List<Object> parametros_servicio) {
         // 1. Buscamos el servicio en el registro dinámico

@@ -1,11 +1,14 @@
 
 import java.io.Serializable;
 
-
+/**
+ * Clase serializable que representa la respuesta de un servicio ejecutado en el Broker.
+ * Contiene el resultado de la ejecución, un indicador de éxito o error, y un mensaje descriptivo (útil en caso de error).
+ */
 public class Respuesta implements Serializable {
     private Object resultado;   // Resultado de la ejecución del servicio
     private boolean exito;      // true si la ejecución fue correcta, false si hubo error
-    private String mensaje;     // Mensaje descriptivo (útil en caso de error)
+    private String mensaje;     // Mensaje descriptivo 
 
     // Constructor para respuesta exitosa
     public Respuesta(Object resultado) {

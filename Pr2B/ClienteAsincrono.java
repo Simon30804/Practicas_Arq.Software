@@ -4,13 +4,19 @@ import java.util.UUID;
 
 /**
  * Cliente de DEMOSTRACIÓN para el CASO ASÍNCRONO.
- * 
+ * Usado para comprobar el correcto funcionamiento de la comunicación asíncrona entre el Cliente y el Broker.
  * Demuestra todos los escenarios en el apartado 3.3 Versiones asíncronas del guion de prácticas:
  * 1. Funcionamiento correcto de comunicación asíncrona
  * 2. Error si el cliente no había solicitado el servicio
- * 3. Error si el cliente que solicita la respuesta no es el mismo
  * 4. Error si la respuesta ya fue entregada anteriormente
  * 5. Error si intenta solicitar el mismo servicio sin recoger respuesta
+ * 
+ * Nota sobre la identificación de clientes:
+ *   El Broker identifica a cada cliente por su dirección IP, mediante RemoteServer.getClientHost(),
+ *   por lo que los métodos asíncronos NO reciben un clienteId explícito.
+ *   El escenario "cliente incorrecto" (escenario 3 del PDF) queda garantizado a nivel de
+ *   red: dos máquinas distintas tienen IPs distintas, y cada una solo puede recoger sus
+ *   propias respuestas. En este programa de pruebas (solo existe una única máquina) no se tiene en cuenta ese escenario.
  */
 public class ClienteAsincrono {
 
@@ -73,7 +79,7 @@ public class ClienteAsincrono {
 
         // Solicitamos la ejecución asíncrona
         System.out.println("Solicitando ejecución asíncrona de 'contar_usuarios'...");
-        broker.ejecutar_servicio_asinc(clienteId, "contar_usuarios", Arrays.asList());
+        broker.ejecutar_servicio_asinc("contar_usuarios", Arrays.asList());
         System.out.println("Petición asíncrona registrada. Cliente procede sin esperar.\n");
 
         // Simulamos que el cliente hace otras cosas (puede ser cualquier tarea, aquí simplemente imprimimos mensajes y pausamos la ejecución para simular tiempo de procesamiento)
@@ -85,13 +91,13 @@ public class ClienteAsincrono {
 
         // Intentamos obtener la respuesta (puede que aún no esté lista)
         System.out.println("\n Intentando obtener la respuesta...");
-        Respuesta r1 = broker.obtener_respuesta_asinc(clienteId, "contar_usuarios");
+        Respuesta r1 = broker.obtener_respuesta_asinc("contar_usuarios");
         
         if (r1.getMensaje().contains("aún está en ejecución")) {
             System.out.println(r1.getMensaje());
             pausa(2);
             System.out.println("\n Reintentando obtener la respuesta...");
-            r1 = broker.obtener_respuesta_asinc(clienteId, "contar_usuarios");
+            r1 = broker.obtener_respuesta_asinc("contar_usuarios");
         }
 
         if (r1.isExito()) {
@@ -109,7 +115,7 @@ public class ClienteAsincrono {
         System.out.println("==========================================");
 
         System.out.println("→ Intentando obtener respuesta de un servicio que NO fue solicitado...");
-        Respuesta r = broker.obtener_respuesta_asinc(clienteId, "servicio_inventado");
+        Respuesta r = broker.obtener_respuesta_asinc( "servicio_inventado");
         
         System.out.println( r.getMensaje());
         System.out.println("Error gestionado correctamente\n");
@@ -117,26 +123,16 @@ public class ClienteAsincrono {
 
     // ESCENARIO 3: Error - Cliente incorrecto
     private static void escenario3_ClienteIncorrecto() throws Exception {
-        System.out.println("=========================================");
+        System.out.println("==========================================");
         System.out.println("   ESCENARIO 3: Cliente incorrecto");
         System.out.println("==========================================");
-
-        // Cliente A solicita un servicio
-        String clienteA = "ClienteA";
-        System.out.println(clienteA + " solicita 'obtener_usuarios'...");
-        broker.ejecutar_servicio_asinc(clienteA, "obtener_usuarios", Arrays.asList());
-        pausa(2);
-
-        // Cliente B intenta obtener la respuesta
-        String clienteB = "ClienteB";
-        System.out.println(clienteB + " intenta obtener la respuesta de " + clienteA + "...");
-        Respuesta r = broker.obtener_respuesta_asinc(clienteB, "obtener_usuarios");
-        
-        System.out.println(r.getMensaje());
-        System.out.println("Error gestionado correctamente\n");
-
-        //Cliente A recoge su respuesta
-        broker.obtener_respuesta_asinc(clienteA, "obtener_usuarios");
+        System.out.println("  NOTA: El Broker identifica clientes por su dirección IP.");
+        System.out.println("  En la práctica, si el Cliente A (IP_A) solicita un servicio,");
+        System.out.println("  el Cliente B (IP_B diferente) NO puede obtener esa respuesta:");
+        System.out.println("  el Broker no encontrará la clave 'IP_B:servicio' y devolverá");
+        System.out.println("  el error 'No solicitaste previamente el servicio'.");
+        System.out.println("  → Este escenario se verifica ejecutando dos clientes en");
+        System.out.println("    máquinas distintas del laboratorio L1.02.\n");
     }
 
     // ESCENARIO 4: Error - Respuesta ya entregada
@@ -146,15 +142,15 @@ public class ClienteAsincrono {
         System.out.println("==========================================");
 
         System.out.println("Solicitando 'contar_usuarios' de nuevo...");
-        broker.ejecutar_servicio_asinc(clienteId, "contar_usuarios", Arrays.asList());
+        broker.ejecutar_servicio_asinc( "contar_usuarios", Arrays.asList());
         pausa(2);
 
         System.out.println("Obteniendo respuesta por primera vez...");
-        Respuesta r1 = broker.obtener_respuesta_asinc(clienteId, "contar_usuarios");
+        Respuesta r1 = broker.obtener_respuesta_asinc( "contar_usuarios");
         System.out.println("Primera entrega: " + r1.getResultado() + "\n");
 
         System.out.println("Intentando obtener la misma respuesta de nuevo...");
-        Respuesta r2 = broker.obtener_respuesta_asinc(clienteId, "contar_usuarios");
+        Respuesta r2 = broker.obtener_respuesta_asinc( "contar_usuarios");
         System.out.println(r2.getMensaje());
         System.out.println("Error gestionado correctamente\n");
     }
@@ -166,12 +162,12 @@ public class ClienteAsincrono {
         System.out.println("==========================================");
 
         System.out.println("Solicitando 'obtener_usuarios'...");
-        broker.ejecutar_servicio_asinc(clienteId, "obtener_usuarios", Arrays.asList());
+        broker.ejecutar_servicio_asinc( "obtener_usuarios", Arrays.asList());
         System.out.println("Primera solicitud registrada\n");
 
         System.out.println("Intentando solicitar el MISMO servicio SIN recoger la respuesta...");
         try {
-            broker.ejecutar_servicio_asinc(clienteId, "obtener_usuarios", Arrays.asList());
+            broker.ejecutar_servicio_asinc( "obtener_usuarios", Arrays.asList());
             System.out.println("ERROR: Debería haber lanzado excepción");
         } catch (Exception e) {
             System.out.println("Excepción capturada: " + e.getMessage());
@@ -181,7 +177,7 @@ public class ClienteAsincrono {
         // Recogemos la respuesta pendiente
         System.out.println("Recogiendo la respuesta pendiente para limpiar...");
         pausa(2);
-        Respuesta r = broker.obtener_respuesta_asinc(clienteId, "obtener_usuarios");
+        Respuesta r = broker.obtener_respuesta_asinc( "obtener_usuarios");
         System.out.println("Respuesta recogida: " + r.getResultado() + "\n");
     }
 

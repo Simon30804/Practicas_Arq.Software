@@ -80,7 +80,6 @@ implements Servidor {
     /*
     * Servicio para obtener la lista de usuarios registrados en el sistema. No recibe parámetros.
     * Devuelve una respuesta con la lista de nombres de usuario registrados.
-    * El servidor devuelve la lista de usuarios como un Set<String> para evitar duplicados y facilitar la gestión de usuarios.
     */
     private Respuesta obtenerUsuarios(List<Object> parametros){
         List<String> listaUsuarios = new ArrayList<>(usuarios);
@@ -103,9 +102,9 @@ implements Servidor {
      * Menú auxiliar del servidor, para poder dar de alta/baja servicios de manera dinámimca
      */
     // Para evitar tener que dar de baja servicios de manera manual, vamos a crear en el servidor un menu interactivo el cual nos permita 
-            // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
-            //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
-            // los servicios para los clientes en tiempo real.
+    // dar de baja servicios de manera dinámica, sin necesidad de reiniciar el servidor ni el broker, y así poder probar la funcionalidad de baja de servicios del broker.
+    //  De esta manera, podremos eliminar servicios que ya no queramos ofrecer o que queramos actualizar, y el broker se encargará de gestionar la disponibilidad de 
+    // los servicios para los clientes en tiempo real.
     private static void menuPrincipal() {
         System.out.println("\n=================================");
         System.out.println("     MENÚ DE GESTIÓN DE SERVICIOS");

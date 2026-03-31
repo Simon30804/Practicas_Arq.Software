@@ -57,11 +57,10 @@ public interface Broker extends Remote {
      * RESTRICCIÓN: Un cliente no puede solicitar el mismo servicio dos veces
      * sin haber recogido la respuesta anterior.
      * 
-     * @param clienteId Identificador único del cliente que hace la petición
      * @param nom_servicio Nombre del servicio a ejecutar
      * @param parametros_servicio Lista de parámetros necesarios
      */
-    void ejecutar_servicio_asinc(String clienteId, String nom_servicio,
+    void ejecutar_servicio_asinc(String nom_servicio,
                                  List<Object> parametros_servicio)
             throws RemoteException;
 
@@ -74,11 +73,10 @@ public interface Broker extends Remote {
      * - La respuesta ya fue entregada anteriormente
      * - La respuesta aún no está disponible (servicio en ejecución)
      * 
-     * @param clienteId Identificador del cliente que solicita la respuesta
      * @param nom_servicio Nombre del servicio del que se quiere obtener respuesta
      * @return Respuesta con el resultado o un mensaje de error
      */
-    Respuesta obtener_respuesta_asinc(String clienteId, String nom_servicio)
+    Respuesta obtener_respuesta_asinc(String nom_servicio)
             throws RemoteException;
             
 }

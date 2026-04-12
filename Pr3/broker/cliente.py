@@ -3,7 +3,7 @@ import socket, json, threading
 class Cliente:
     """ Cliente para interactuar con el broker. Proporciona métodos para declarar colas, publicar mensajes y otras operaciones administrativas.
     Lo usan tanto los productores como los consumidores para comunicarse con el broker."""
-    def __init__(self, host: str = "localhost", port: int = 5555):
+    def __init__(self, host: str = "127.0.0.1", port: int = 5555):
         self.host     = host
         self.port     = port
         self._sock    = None
@@ -35,21 +35,25 @@ class Cliente:
         linea, self._buffer = self._buffer.split("\n", 1) # Separamos el mensaje completo del buffer
         return json.loads(linea.strip()) # Devolvemos el mensaje como un diccionario decodificado desde JSON
     
+    def ack(self, cola: str, mensaje_id: str) -> dict:
+        """Confirma al broker que el mensaje fue procesado correctamente."""
+        return self._enviar({"accion": "ack", "queue": cola, "mensaje_id": mensaje_id})
+    
     # Servicios del cliente para interactuar con el broker
     def declarar_cola(self, cola: str) -> dict:
         """ Declara una nueva cola en el broker. Devuelve la respuesta del broker."""
-        return self._enviar({"accion": "declarar_cola", "nombre": cola})
+        return self._enviar({"accion": "declarar_cola", "queue": cola})
     
     def publicar(self, cola: str, mensaje: str) -> dict:
         """ Publica un mensaje en una cola específica. Devuelve la respuesta del broker."""
-        return self._enviar({"accion": "publicar", "cola": cola, "mensaje": mensaje})
+        return self._enviar({"accion": "publicar", "queue": cola, "body": mensaje})
     
     def consumir(self, cola: str, callback):
         """
         Se suscribe a la cola y arranca un hilo que invoca `callback(body)`
         por cada mensaje recibido. No bloquea el hilo principal.
         """
-        resp = self._enviar({"op": "consume", "queue": cola}) # Enviamos una solicitud al broker para consumir mensajes de la cola especificada
+        resp = self._enviar({"accion": "consumir", "queue": cola}) # Enviamos una solicitud al broker para consumir mensajes de la cola especificada
         if resp.get("status") != "ok":
             raise RuntimeError(f"Error al suscribirse: {resp}")
 
@@ -70,7 +74,8 @@ class Cliente:
             try:
                 msg = self._recibir()
                 if msg.get("status") == "message":
-                    callback(msg["body"])
+                    # Llamamos al callback con el cuerpo del mensaje, el ID del mensaje y el nombre de la cola para que el callback pueda procesar el mensaje y luego enviar un ack al broker
+                    callback(msg["body"], msg["mensaje_id"], msg["queue"])
             except Exception as e:
                 print(f"[client] Conexión cerrada: {e}")
                 break
@@ -78,11 +83,11 @@ class Cliente:
     # Funciones adicionales para listar colas y eliminar colas, útiles para pruebas y administración
 
     def listar_colas(self) -> list:
-        resp = self._enviar({"op": "listar_colas"}) # Enviamos una solicitud al broker para listar las colas disponibles
+        resp = self._enviar({"accion": "listar_colas"}) # Enviamos una solicitud al broker para listar las colas disponibles
         return resp.get("queues", [])
 
     def eliminar_cola(self, cola: str) -> dict:
-        return self._enviar({"op": "borrar_cola", "queue": cola}) # Enviamos una solicitud al broker para eliminar una cola específica
+        return self._enviar({"accion": "eliminar_cola", "queue": cola}) # Enviamos una solicitud al broker para eliminar una cola específica
 
     def close(self): 
         self._sock.close() # Cerramos la conexión con el broker

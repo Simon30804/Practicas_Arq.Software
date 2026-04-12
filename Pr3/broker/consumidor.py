@@ -1,11 +1,16 @@
 import time
 from cliente import Cliente
 
-def procesarMensaje(mensaje: str):
-    print(f"Procesando mensaje: {mensaje}") # Imprimimos el mensaje que estamos procesando
-    time.sleep(2) # Simulamos un tiempo de procesamiento de 2 segundos
+cliente = None # Variable global para almacenar la instancia del cliente y poder usarla dentro del callback `procesarMensaje`
+
+def procesarMensaje(mensaje: str, mensaje_id: str, cola: str):
+    print(f"Procesando mensaje: '{mensaje}'")
+    time.sleep(2)                          # simulamos trabajo
+    cliente.ack(cola, mensaje_id)          # confirmamos al broker
+    print(f"[Consumidor] ACK enviado para {mensaje_id}")
 
 def main():
+    global cliente
     cliente = Cliente() # Creamos una instancia del cliente para conectarnos al broker 
 
     cliente.declarar_cola("test") # Declaramos la cola "test" para asegurarnos de que existe antes de intentar consumir mensajes

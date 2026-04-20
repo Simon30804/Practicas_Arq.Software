@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-notificaciones
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicio-notificaciones
+  template:
+    metadata:
+      labels:
+        app: servicio-notificaciones
+    spec:
+      containers:
+        - name: servicio-notificaciones
+          image: servicio-notificaciones:v1
+          imagePullPolicy: Never
+          env:
+            - name: BROKER_HOST
+              value: broker
+            - name: BROKER_PORT
+              value: "5555"

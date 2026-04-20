@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-inventario
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicio-inventario
+  template:
+    metadata:
+      labels:
+        app: servicio-inventario
+    spec:
+      containers:
+        - name: servicio-inventario
+          image: servicio-inventario:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8002
+          env:
+            - name: INVENTARIO_DB_HOST
+              value: postgres
+            - name: INVENTARIO_DB_PORT
+              value: "5432"
+            - name: INVENTARIO_DB_NAME
+              value: inventario
+            - name: INVENTARIO_DB_USER
+              value: user
+            - name: INVENTARIO_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-postgres
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicio-inventario
+spec:
+  type: ClusterIP
+  selector:
+    app: servicio-inventario
+  ports:
+    - port: 8002
+      targetPort: 8002

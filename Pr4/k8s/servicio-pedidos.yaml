@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-pedidos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicio-pedidos
+  template:
+    metadata:
+      labels:
+        app: servicio-pedidos
+    spec:
+      containers:
+        - name: servicio-pedidos
+          image: servicio-pedidos:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8001
+          env:
+            - name: PEDIDOS_DB_HOST
+              value: mariadb
+            - name: PEDIDOS_DB_PORT
+              value: "3306"
+            - name: PEDIDOS_DB_NAME
+              value: pedidos
+            - name: PEDIDOS_DB_USER
+              value: user
+            - name: PEDIDOS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mariadb
+                  key: MARIADB_PASSWORD
+            - name: BROKER_HOST
+              value: broker
+            - name: BROKER_PORT
+              value: "5555"
+            - name: INVENTARIO_URL
+              value: http://servicio-inventario:8002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicio-pedidos
+spec:
+  type: ClusterIP
+  selector:
+    app: servicio-pedidos
+  ports:
+    - port: 8001
+      targetPort: 8001

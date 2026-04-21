@@ -1,7 +1,4 @@
-# Ejecución en máquinas del laboratorio — Práctica 3 (Python)
-
-A diferencia de la práctica anterior en Java con RMI, esta práctica usa
-sockets TCP puros. No necesitas rmiregistry ni compilar nada.
+# Ejecución en máquinas del laboratorio — Práctica 3
 
 ---
 
@@ -11,45 +8,45 @@ sockets TCP puros. No necesitas rmiregistry ni compilar nada.
 |---|---|---|
 | lab102-196 | 155.210.154.196 | Broker de mensajes |
 | lab102-197 | 155.210.154.197 | Productor |
-| lab102-198 | 155.210.154.198 | Consumidor |
+| lab102-198 | 155.210.154.195 | Consumidor |
 
 ---
 
 ## Paso 1 — Encender las máquinas remotas
 
-Conéctate a la máquina central de la universidad:
+Nos conectamos a la máquina central de la universidad:
 
 ```bash
 ssh a869800@central.cps.unizar.es
 ```
 
-Encender las tres máquinas:
+Encendemos las tres máquinas:
 
 ```bash
 /usr/local/etc/wake -y lab102-196
 /usr/local/etc/wake -y lab102-197
-/usr/local/etc/wake -y lab102-198
+/usr/local/etc/wake -y lab102-195
 ```
 
-Verificar que responden:
+Verificamos que responden:
 
 ```bash
 ping 155.210.154.196
 ping 155.210.154.197
-ping 155.210.154.198
+ping 155.210.154.195
 ```
 
 ---
 
 ## Paso 2 — Copiar los ficheros a cada máquina
 
-Desde tu máquina local, copia los ficheros de la práctica:
+Desde nuestra máquina local, copiamos los ficheros de la práctica:
 
 ```bash
 # Crear directorio en cada máquina remota
 ssh a869800@155.210.154.196 "mkdir -p ~/practica3"
 ssh a869800@155.210.154.197 "mkdir -p ~/practica3"
-ssh a869800@155.210.154.198 "mkdir -p ~/practica3"
+ssh a869800@155.210.154.195 "mkdir -p ~/practica3"
 
 # Copiar broker a la máquina 196
 scp broker_server.py cliente.py a869800@155.210.154.196:~/practica3/
@@ -57,8 +54,8 @@ scp broker_server.py cliente.py a869800@155.210.154.196:~/practica3/
 # Copiar productor a la máquina 197
 scp cliente.py productor.py a869800@155.210.154.197:~/practica3/
 
-# Copiar consumidor a la máquina 198
-scp cliente.py consumidor.py a869800@155.210.154.198:~/practica3/
+# Copiar consumidor a la máquina 195
+scp cliente.py consumidor.py a869800@155.210.154.195:~/practica3/
 ```
 
 ---
@@ -71,61 +68,34 @@ cd ~/practica3
 python3 broker_server.py
 ```
 
-Debes ver:
+Debemos ver:
 ```
 [server] Broker escuchando en 0.0.0.0:5555
 ```
 
-Mantén esta sesión SSH abierta.
+Mantenemos esta sesión SSH abierta.
 
 ---
 
-## Paso 4 — Arrancar el consumidor (máquina 198)
+## Paso 4 — Arrancar el consumidor (máquina 195)
 
-Abre otra terminal y conéctate a la máquina 198.
-Antes de ejecutar, edita `consumidor.py` para apuntar al broker:
-
-```bash
-ssh a869800@155.210.154.198
-cd ~/practica3
-```
-
-Edita la línea de conexión en `consumidor.py`:
-
-```python
-# Cambiar localhost por la IP del broker
-cliente = Cliente(host="155.210.154.196", port=5555)
-```
+Abrimos otra terminal y nos conectamos a la máquina 195.
 
 Lanza el consumidor:
 
 ```bash
-python3 consumidor.py
+BROKER_HOST=155.210.154.196 python3 consumidor.py
 ```
-
 ---
 
 ## Paso 5 — Arrancar el productor (máquina 197)
 
-Abre otra terminal y conéctate a la máquina 197.
-Edita `productor.py` para apuntar al broker:
+Abrimos otra terminal y nos conectamos a la máquina 197.
+
+Lanzamos el productor:
 
 ```bash
-ssh a869800@155.210.154.197
-cd ~/practica3
-```
-
-Edita la línea de conexión en `productor.py`:
-
-```python
-# Cambiar localhost por la IP del broker
-cliente = Cliente(host="155.210.154.196", port=5555)
-```
-
-Lanza el productor:
-
-```bash
-python3 productor.py
+BROKER_HOST=155.210.154.196 python3 productor.py
 ```
 
 ---
@@ -143,14 +113,25 @@ python3 productor.py
 ...
 ```
 
-**Consumidor (198)**:
+**Consumidor (195)**:
 ```
 [client] Escuchando mensajes...
 [Consumidor] Esperando mensajes...
 Procesando mensaje: 'Mensaje 0'
-Procesando mensaje: 'Mensaje 1'
+[Consumidor] ACK enviado para d92d5385-336e-421b-8144-8f4576abaa51
+Procesando mensaje: 'Mensaje 2'
+[Consumidor] ACK enviado para 387db302-9c63-4b01-9d10-aac91efb111f
+Procesando mensaje: 'Mensaje 4'
+[Consumidor] ACK enviado para c2b6a1fc-dc30-4c5d-9b11-93dde6a617ed
+Procesando mensaje: 'Mensaje 6'
+[Consumidor] ACK enviado para fa7deba5-0d64-4ee4-8d37-16ec850c25ce
+Procesando mensaje: 'Mensaje 8'
+[Consumidor] ACK enviado para 14dc5f8d-d22c-4ed0-9fc1-893182fa6da9
 ...
 ```
+
+Solo procesa los de numero par en la primera ronda, la siguiente se quedan guardados en la cola como pendientes, podemos verlo en estado_broker.json. Al desconectar el consumidor y conectarlo de nuevo comienza a consumir de manera automatica los mensajes pendientes.
+Esto se debe a que simulamos que el consumidor 'trabaja' con un sleep(2), mientras que el productor envía mensajes con un sleep(1), esto hace que el consumidor no pueda consumir 1 de cada 2, pues está procesando otro mensaje.
 
 **Productor (197)**:
 ```
@@ -161,19 +142,18 @@ Publicado: 'Mensaje 1' -> {'status': 'ok'}
 
 ---
 
-## Alternativa: editar el host desde línea de comandos
 
 Para no tener que editar los ficheros manualmente en cada máquina,
-puedes pasar la IP del broker como variable de entorno si modificas
-`cliente.py` para leerla:
+pasamos la IP del broker como variable de entorno, para leerla:
 
+En consumidor.py y en productor.py
 ```python
 import os
 host = os.getenv("BROKER_HOST", "localhost")
 cliente = Cliente(host=host, port=5555)
 ```
 
-Y luego lanzar así:
+Y luego lanzamos así:
 
 ```bash
 # En la máquina del productor
@@ -183,32 +163,9 @@ BROKER_HOST=155.210.154.196 python3 productor.py
 BROKER_HOST=155.210.154.196 python3 consumidor.py
 ```
 
----
-
-## Diferencias con la práctica anterior (Java + RMI)
-
-| Aspecto | Java RMI (P. anterior) | Python sockets (P3) |
-|---|---|---|
-| Compilación | `javac *.java` en cada máquina | No necesaria |
-| Registro de objetos | `rmiregistry 32000` en cada máquina | No necesario |
-| Parámetro de red | `-Djava.rmi.server.hostname=IP` | `host="IP"` en el cliente |
-| Dependencias | JDK instalado | Python 3 instalado |
-| Puertos | 32000, 32001, 32002 | Solo 5555 |
-
----
-
 ## Notas importantes
 
 - El broker debe arrancar **antes** que el consumidor y el productor.
 - Si el broker cae, los clientes perderán la conexión. Reinicia el broker
   y luego vuelve a lanzar los clientes.
-- El puerto 5555 debe estar abierto en el firewall de la máquina 196.
-  Si hay problemas de conexión, verificar con:
 
-```bash
-# Desde la máquina 197 o 198
-nc -zv 155.210.154.196 5555
-```
-
-Si responde `Connection to 155.210.154.196 5555 port [tcp] succeeded`
-el puerto está accesible.

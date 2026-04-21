@@ -1,4 +1,5 @@
 import time
+import os
 from cliente import Cliente
 
 cliente = None # Variable global para almacenar la instancia del cliente y poder usarla dentro del callback `procesarMensaje`
@@ -10,8 +11,11 @@ def procesarMensaje(mensaje: str, mensaje_id: str, cola: str):
     print(f"[Consumidor] ACK enviado para {mensaje_id}")
 
 def main():
-    global cliente
-    cliente = Cliente() # Creamos una instancia del cliente para conectarnos al broker 
+    global cliente 
+    cliente = Cliente( # Creamos una instancia del cliente para conectarnos al broker
+        host=os.getenv("BROKER_HOST", "127.0.0.1"),
+        port=int(os.getenv("BROKER_PORT", "5555"))
+    )
 
     cliente.declarar_cola("test") # Declaramos la cola "test" para asegurarnos de que existe antes de intentar consumir mensajes
 

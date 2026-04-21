@@ -1,8 +1,12 @@
 import time
+import os
 from cliente import Cliente
 
 def main():
-    cliente = Cliente() # Creamos una instancia del cliente para conectarnos al broker 
+    cliente = Cliente( # Creamos una instancia del cliente para conectarnos al broker 
+        host=os.getenv("BROKER_HOST", "127.0.0.1"),
+        port=int(os.getenv("BROKER_PORT", "5555"))
+    ) 
 
     # Declaramos una cola llamada "test"
     cliente.declarar_cola("test") # Servicio 1

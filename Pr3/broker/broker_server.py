@@ -170,7 +170,7 @@ class BrokerCore:
             q = self._queues.get(nombre_cola)
 
         if q is None:
-            print(f"[broker] Cola '{nombre_cola}' no existe — mensaje descartado")
+            print(f"[broker] Cola '{nombre_cola}' no existe -- mensaje descartado")
             return {"status": "error", "reason": "queue not found"}
 
         msg = Message(mensaje)
@@ -196,7 +196,7 @@ class BrokerCore:
             q = self._queues.get(nombre_cola)
 
         if q is None:
-            print(f"[broker] Cola '{nombre_cola}' no existe — suscripción fallida")
+            print(f"[broker] Cola '{nombre_cola}' no existe -- suscripción fallida")
             return {"status": "error", "reason": "queue not found"}
 
         with q.lock:
@@ -235,7 +235,7 @@ class BrokerCore:
         try:
             consumidor._enviar(payload) 
             queue.marcar_unacked(mensaje, consumidor)
-            print(f"[broker] Entregado msg {mensaje.id} → consumidor en '{queue.name}'")
+            print(f"[broker] Entregado msg {mensaje.id} --> consumidor en '{queue.name}'")
         except Exception as e:
             print(f"[broker] Error enviando mensaje: {e}")
             queue.eliminar_consumidor(consumidor)

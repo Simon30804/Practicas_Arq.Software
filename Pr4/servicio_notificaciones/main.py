@@ -12,6 +12,12 @@ def procesar_notificacion(mensaje: str, mensaje_id: str, cola: str):
     """Callback invocado por el broker al recibir un evento."""
     print(f"[Notificaciones] Notificacion enviada: {mensaje}")
     print(f"[Notificaciones] ID mensaje: {mensaje_id}")
+    try:
+        # Confirmar al broker que el mensaje fue procesado
+        broker.ack(cola, mensaje_id)
+        print(f"[Notificaciones] ACK enviado: {mensaje_id}")
+    except Exception as e:
+        print(f"[Notificaciones] Error enviando ACK: {e}")
 
 def main():
     global broker

@@ -42,9 +42,16 @@ class Cliente:
         linea, self._buffer = self._buffer.split("\n", 1) # Separamos el mensaje completo del buffer
         return json.loads(linea.strip()) # Devolvemos el mensaje como un diccionario decodificado desde JSON
     
-    def ack(self, cola: str, mensaje_id: str) -> dict:
-        """Confirma al broker que el mensaje fue procesado correctamente."""
-        return self._enviar({"accion": "ack", "queue": cola, "mensaje_id": mensaje_id})
+    def ack(self, cola: str, mensaje_id: str) -> None:
+        """Confirma al broker que el mensaje fue procesado. No espera respuesta
+        para evitar conflictos con el hilo _listen_loop que lee del mismo socket."""
+        with self._lock:
+            try:
+                self._sock.sendall(
+                    (json.dumps({"accion": "ack", "queue": cola, "mensaje_id": mensaje_id}) + "\n").encode()
+                )
+            except (ConnectionError, BrokenPipeError, OSError):
+                print("[Cliente] Error enviando ACK — conexión perdida")
     
     # Servicios del cliente para interactuar con el broker
     def declarar_cola(self, cola: str) -> dict:
